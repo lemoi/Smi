@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style type="text/css">
+		div:active{
+			background: black;
+		}
+	</style>
+</head>
+<body>
+	<div id="display"></div>
+<script type="text/javascript" src="smi.js"></script>
+<script type="text/javascript">
+var a=Smi.deF({
+	prop:{
+		_raw_:"div"
+	},
+	content:function(){
+		return this.prop.i;
+	}
+});
+var b=Smi.deF({
+	prop:{
+		_raw_:"div"
+	},
+	fns:{
+		handleClick:function(){
+			alert(1);
+		}
+	},
+	content:function(){
+		return [this.prop.da,a({i:"o"},{click:this.fns.handleClick})];
+	}
+});
+var c=Smi.deF({
+ 	prop:{
+ 		_raw_:"p"
+ 	},
+ 	content:function(){
+ 		return [b({da:"哈哈哈哈哈哈"})];
+ 	}
+ })
+Smi.render(b(),document.getElementById("display"));
+
+
+</script>
+</body>
+</html>
