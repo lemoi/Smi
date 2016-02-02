@@ -32,6 +32,7 @@ var Smi=(function(){
 		this.initInfo=initInfo||"computed";
 	};
 	fns.diff=function(obj1,obj2){//以obj1为参考 
+		var plus,minus;
 		if(obj1===undefined){
 			if(obj2 instanceof Array) {
 				obj1=[];
@@ -43,8 +44,8 @@ var Smi=(function(){
 		}
 		if((obj1 instanceof Array)
 		&&(obj2 instanceof Array)){
-			var plus=[];
-			var minus=[];
+			plus=[];
+			minus=[];
 			obj1.forEach(function(value){
 				if(!(obj2.some((val)=>(value==val)))){
 					minus.push(value);
@@ -65,8 +66,8 @@ var Smi=(function(){
 			}
 		}else if((Object.getPrototypeOf(obj1)===Object.prototype)
 			&&(Object.getPrototypeOf(obj2)===Object.prototype)){
-			var plus={};
-			var minus=[];
+			plus={};
+			minus=[];
 			Object.keys(obj1).forEach(function(i){
 				if(obj2[i]===undefined){
 					minus.push(i);
@@ -355,36 +356,3 @@ var Smi=(function(){
 		render:render
 	}
 })();
-
-
-// current_state :{
-// 	style:{
-
-// 	},
-// 	class:[],
-// 	data:{
-// 		data1:      ,
-// 		data2:      
-// 	},
-// 	content:[
-// 	{
-// 		type:plain-string,
-// 		value:
-// 	},
-// 	{
-// 		type:comp_instance,
-// 		value:instance.content();   is return false 则移除该元素
-// 	}
-// 	]
-// }
-
-// diff={
-// 	style:{
-// 	},
-// 	class:function(){
-
-// 	},
-// 	data:function(){
-
-// 	},
-// }

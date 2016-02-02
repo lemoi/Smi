@@ -3,64 +3,37 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Document</title>
+	<link rel="stylesheet" type="text/css" href="src/smi_css/reboot.css" />
+	<link rel="stylesheet" type="text/css" href="src/smi_css/grid.css" />
+	<link rel="stylesheet" type="text/css" href="src/smi_css/btn.css" />
 	<style type="text/css">
+/*		div.container-fluid{
+			height: 1000px;
+		/*	background: #66ccff;*/
+		}
+/*		div{
+			height:500px;
+		}
+		#bt1:focus{
+			background: black;
+		}*/
 	</style>
 </head>
 <body>
-	<div class="display"></div>
-<script type="text/javascript" src="smi.js"></script>
+<!-- 	<div class="container-fluid">
+		<button class="btn btn-sm" type="submit">啊哈哈</button>
+	</div> -->
+	<div id="div1">
+	<button class="btn btn-primary">sdfsfsdf</button>
+	<button class="btn btn-secondary">sdfsfsdf</button>
+	<button class="btn btn-info">sdfsfsdf</button>
+	<button class="btn btn-success">sdfsfsdf</button>
+	<button class="btn btn-warning">sdfsfsdf</button>
+	<button class="btn btn-danger btn-lg">sdfsfsdf</button>
+	<button class="btn btn-link">sdfsfsdf</button>
+	</div>
+<script type="text/javascript" src="src/smi_js/smi.js"></script>
 <script type="text/javascript">
-var a=Smi.deF({
-	prop:{
-		_raw_:"div",
-		co:"哈哈哈哈哈",
-		_style_:{
-			width:"100px",
-			background:"red"
-		}
-	},
-	content:function(){
-		return this.prop.co;
-	}
-})
-var b=Smi.deF({
-	prop:{
-		_style_:{
-			background:"blue",
-			width:"200px"
-		},
-		cla:["a","b","c"],
-		bool:true,
-		l:100,
-		val:"侯文博"
-	},
-	fns:{
-		handleClick:function(evt){
-			evt.preventDefault();
-			evt.stopPropagation();
-			//this.prop._style_.background=this.prop._style_.background=="blue"?"#66ccff":"blue";
-			if(this.prop.bool==true){
-				//this.prop._class_=this.prop.cla;
-				this.prop.bool=false;
-			}else{
-				this.prop._class_=[];
-				this.prop.bool=true;
-			}
-			//this.prop._id_="1";
-			this.prop.l+=100;
-			this.prop.val+=1;
-			this.update();
-			return false;
-		}
-	},
-	content:function(){
-		return [a({},{click:this.fns.handleClick,contextmenu:function(evt){evt.preventDefault();}}),a({_style_:{width:this.prop.l+"px",background:"pink"}},{click:this.fns.handleClick}),this.prop.val];
-	}
-})
-Smi.render(b(),document.getElementsByClassName("display")[0]);
-// var a=document.createTextNode("dsdsf");
-// document.body.appendChild(a);
-// console.log(a.nodeValue="23424");
 </script>
 </body>
 </html>
