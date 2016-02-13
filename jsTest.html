@@ -6,34 +6,45 @@
 	<link rel="stylesheet" type="text/css" href="src/smi_css/reboot.css" />
 	<link rel="stylesheet" type="text/css" href="src/smi_css/grid.css" />
 	<link rel="stylesheet" type="text/css" href="src/smi_css/btn.css" />
-	<style type="text/css">
-/*		div.container-fluid{
-			height: 1000px;
-		/*	background: #66ccff;*/
-		}
-/*		div{
-			height:500px;
-		}
-		#bt1:focus{
-			background: black;
-		}*/
-	</style>
 </head>
 <body>
-<!-- 	<div class="container-fluid">
-		<button class="btn btn-sm" type="submit">啊哈哈</button>
-	</div> -->
-	<div id="div1">
-	<button class="btn btn-primary">sdfsfsdf</button>
-	<button class="btn btn-secondary">sdfsfsdf</button>
-	<button class="btn btn-info">sdfsfsdf</button>
-	<button class="btn btn-success">sdfsfsdf</button>
-	<button class="btn btn-warning">sdfsfsdf</button>
-	<button class="btn btn-danger btn-lg">sdfsfsdf</button>
-	<button class="btn btn-link">sdfsfsdf</button>
-	</div>
+<div id="dis"></div>
 <script type="text/javascript" src="src/smi_js/smi.js"></script>
 <script type="text/javascript">
+var A=Smi.deF({
+	prop:{
+		_style_:{
+			width:"100px"
+		}
+	},
+	content:function(){
+		return this.prop.i;
+	}
+});
+var B=Smi.deF({
+	prop:{
+		val:0
+	},
+	content:function(){
+		return [A({i:this.prop.val,_style_:{background:"black"}},{click:function(eve){
+			eve.preventDefault();
+			this.prop.val++;
+			this.update();
+		}})];
+	}
+});
+Smi.render(B(),document.getElementById("dis"));
+
+fns:{
+	handleClick:function(eve){
+		this.off("move");//移除所有子元素注册的事件
+		this.offCurrent("move");//移除触发改方法的子元素的事件
+		this.onCurrent("",function(){//注册触发改方法的元素的事件
+		});
+		this.on("",function(){//所有子元素都注册的事件
+		});
+	}
+}
 </script>
 </body>
 </html>

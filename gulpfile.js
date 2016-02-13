@@ -7,6 +7,7 @@ const sourcemaps=require('gulp-sourcemaps');
 gulp.task('compressJS', function() {
   return gulp.src('src/smi_js/*.js')
  	.pipe(babel({presets:['es2015']}))
+    .pipe(gulp.dest('babel'))
  	.pipe(sourcemaps.init())
     .pipe(uglify())
     .pipe(sourcemaps.write('./'))
@@ -18,7 +19,7 @@ gulp.task('compressCss', function() {
     .pipe(sourcemaps.init())
     .pipe(csso())
     .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest('dist'))
+    .pipe(gulp.dest('dist'));
    
 });
 gulp.task('default',['compressJS','compressCss']);

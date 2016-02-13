@@ -10,7 +10,7 @@ var Smi=(function(){
 	fns.deepCopy=function(copyTo,obj){
 		Object.keys(obj).forEach(function(i){
 			if(Object.getPrototypeOf(obj[i])===Object.prototype){
-				if(copyTo[i]&&Object.getPrototypeOf(copyTo[i])===Object.prototype){
+				if(i==="_style_"&&copyTo[i]&&Object.getPrototypeOf(copyTo[i])===Object.prototype){
 				}else{
 					copyTo[i]={};
 				}
@@ -21,7 +21,7 @@ var Smi=(function(){
 				}catch(e){
 					copyTo={};
 					copyTo[i]=obj[i];
-		                  	console.warn("the object copyTo may not be a object");
+		      console.warn("the object copyTo may not be a object");
 				}
 			}
 		}.bind(this));
@@ -29,7 +29,7 @@ var Smi=(function(){
 	};
 	fns.Content=function(val,initInfo){
 		this.value=val;
-		this.initInfo=initInfo||"computed";
+		this.initInfo=initInfo!==undefined?initInfo:"computed";
 	};
 	fns.diff=function(obj1,obj2){//以obj1为参考 
 		var plus,minus;
@@ -42,8 +42,7 @@ var Smi=(function(){
 				obj1=" ";
 			}
 		}
-		if((obj1 instanceof Array)
-		&&(obj2 instanceof Array)){
+		if((obj1 instanceof Array)&&(obj2 instanceof Array)){
 			plus=[];
 			minus=[];
 			obj1.forEach(function(value){
@@ -62,10 +61,9 @@ var Smi=(function(){
 				return {
 					"+":plus,
 					"-":minus
-				}
+				};
 			}
-		}else if((Object.getPrototypeOf(obj1)===Object.prototype)
-			&&(Object.getPrototypeOf(obj2)===Object.prototype)){
+		}else if((Object.getPrototypeOf(obj1)===Object.prototype)&&(Object.getPrototypeOf(obj2)===Object.prototype)){
 			plus={};
 			minus=[];
 			Object.keys(obj1).forEach(function(i){
@@ -84,8 +82,7 @@ var Smi=(function(){
 					return;
 				}
 			});
-			if((Object.keys(plus).length===0)
-			   &&minus.length===0){
+			if((Object.keys(plus).length===0)&&(minus.length===0)){
 				return true;
 			}else{
 				return{
@@ -93,8 +90,7 @@ var Smi=(function(){
 					"-":minus
 				};
 			}			
-		}else if((typeof obj1==="string")
-		&&(typeof obj2==="string")){
+		}else if((typeof obj1==="string")&&(typeof obj2==="string")){
 			if (obj1===obj2) {
 				return true;
 			}else{
@@ -117,7 +113,7 @@ var Smi=(function(){
 						a[value]=diffs;
 						this.__opNum__.push(a);
 						if(diffs["+"] instanceof Array){
-							this.__currentState__[value]=i.map((val)=>val);
+							this.__currentState__[value]=i.slice();
 						}else if(typeof diffs["+"]==="string"){
 							this.__currentState__[value]=i;
 						}else{
@@ -125,11 +121,11 @@ var Smi=(function(){
 							var minus=diffs["-"];
 							plus.forEach((p)=>{
 								this.__currentState__[value][p]=i[p];
-							})
+							});
 							minus.forEach((m)=>{
 								delete this.__currentState__[value][m];
-							})
-						};
+							});
+						}
 					}
 				}
 			}.bind(this));
@@ -140,7 +136,7 @@ var Smi=(function(){
 				this.__op__(i,"-")(value[i]["-"]);				
 				}.bind(this));
 				this.__opNum__=[];			
-			};
+			}
 			var _arr1=this.content();
 			var _arr2=this.__currentState__.content;
 			if(_arr1 instanceof Array){
@@ -151,9 +147,12 @@ var Smi=(function(){
 						}
 					 	A.call(_arr2[i].value);
 					}else{
-						_arr2[i].value.nodeValue=c;
+						if(_arr2[i].initInfo!=c){
+							_arr2[i].value.nodeValue=c;
+							_arr2[i].initInfo=c;
+						}
 					}
-				})
+				});
 			}else{
 				if(_arr1 instanceof Initinfo){
 					if(_arr1.__dataAdd!==undefined){
@@ -161,7 +160,10 @@ var Smi=(function(){
 					}
 					 A.call(_arr2[0].value);
 				}else{
-					_arr2[0].value.nodeValue=_arr1;
+					if(_arr2[0].initInfo!=_arr1){
+						_arr2[0].value.nodeValue=_arr1;
+						_arr2[0].initInfo=_arr1;
+					}
 				}
 			}
 		}).call(instance);
@@ -171,13 +173,13 @@ var Smi=(function(){
 			compT.prop=compT.prop||{};
 			this.__prop__=compT.prop;
 			this.fns=compT.fns||{};
-			this.content=compT.content||(function(){return undefined});
+			this.content=compT.content||(function(){return undefined;});
 			this.setPropData(dataObj);
 			this.prop._raw_=this.prop._raw_||"div";	
 			this.__raw__=document.createElement(this.prop._raw_);	
 			this.__eventHandle__=eveLisObj;
 			this.__currentState__={};
-			this.__opNum__=[];//冻结对象
+			this.__opNum__=[];//冻结对象 
 	};
 	Component.prototype.__op__=function (attr,which){
 			var instance=this;
@@ -185,14 +187,14 @@ var Smi=(function(){
 				switch(which){
 					case "+":
 					return function(para){
-						para!=undefined&&a.call(instance,para);
-					}
+						if(para!==undefined)a.call(instance,para);
+					};
 					case "-":
 					return function(para){
-						para!=undefined&&d.call(instance,para);
-					}				
+						if(para!==undefined)d.call(instance,para);
+					};				
 				}
-			};
+			}
 			switch(attr){
 				case "class":
 					return opDef(
@@ -200,7 +202,7 @@ var Smi=(function(){
 							if( para instanceof Array){
 								para.forEach(function(item){
 									this.__raw__.classList.add(item);
-								}.bind(this))
+								}.bind(this));
 							}else{
 								this.__raw__.classList.add(para);
 							}		
@@ -209,13 +211,12 @@ var Smi=(function(){
 							if( para instanceof Array){
 								para.forEach(function(item){
 									this.__raw__.classList.remove(item);
-								}.bind(this))
+								}.bind(this));
 							}else{
 								this.__raw__.classList.remove(para);
 							}										
 						}
 					);
-					break;
 				case "data":
 					return opDef(
 						function(para){
@@ -228,14 +229,13 @@ var Smi=(function(){
 								para.forEach(function(item){
 									this.__raw__.dataset[item]="";
 									delete this.__raw__.dataset[item];
-								}.bind(this))
+								}.bind(this));
 							}else{
 								this.__raw__.dataset[item]="";
 								delete this.__raw__.dataset[para];
 							}	
 						}
 					);
-					break;
 				case "style":
 					return opDef(
 						function(para){
@@ -247,13 +247,12 @@ var Smi=(function(){
 							if( para instanceof Array){
 								para.forEach(function(item){
 									this.__raw__.style[item]="";
-								}.bind(this))
+								}.bind(this));
 							}else{	
 								this.__raw__.style[para]="";
 							}
 						}
 					);
-					break;
 				default:
 					return opDef(
 						function(para){
@@ -263,22 +262,23 @@ var Smi=(function(){
 							this.__raw__[attr]="";
 						}
 					);
-			};
+			}
 	};
 	Component.prototype.update=function(){
 		fns.update(this);
 	};
 	Component.prototype.setPropData=function(dataObj){
 		this.prop=fns.deepCopy(fns.deepCopy({},this.__prop__),dataObj);
-
-	}
+	};
 	var Initinfo=function(obj,dataObj,eveLisObj){
 		this.__compT=obj;
-		this.__dataAdd=dataObj||{};
-		this.__eventHandle=eveLisObj||{};
-	}
+		this.__dataAdd=dataObj;
+		this.__eventHandle=eveLisObj;
+	};
 	var deF=function(obj){
 		return function(dataObj,eveLisObj){
+			dataObj=dataObj||{};
+			eveLisObj=eveLisObj||{};
 			return	new	Initinfo(obj,dataObj,eveLisObj);
 		};
 	};
@@ -295,7 +295,7 @@ var Smi=(function(){
 							fns.deepCopy(instance.__currentState__[value],i);
 							break;
 						case "class":
-							instance.__currentState__[value]=i.map((val)=>val);							
+							instance.__currentState__[value]=i.slice();							
 							break;
 						default:
 							instance.__currentState__[value]=i;
@@ -306,13 +306,13 @@ var Smi=(function(){
 			});
 			var _arr=instance.content();
 			instance.__currentState__.content=[];
-			if(_arr==undefined){
+			if(_arr===undefined){
 				console.warn("lack of any required parameter");
 				_arr="undefined";
 			}
 			if(_arr instanceof Array){
 				_arr.forEach(function(c){
-					if(c==undefined){
+					if(c===undefined){
 						console.warn("lack of any required parameter");
 						c="undefined";
 					}
@@ -321,13 +321,16 @@ var Smi=(function(){
 						instance.__currentState__.content.push(new fns.Content(rc,c));	
 						/*初步实现待整改，消息代理等等*/
 						for(var i in rc.__eventHandle__){
-							rc.__raw__.addEventListener(i,rc.__eventHandle__[i].bind(instance));
-						};
+							if(rc.__eventHandle__.hasOwnProperty(i)){
+								rc.__raw__.addEventListener(i,rc.__eventHandle__[i].bind(instance));
+							}
+						}
 						instance.__raw__.appendChild(rc.__raw__);					
 					}else{
 						try{
 							var	textNode=document.createTextNode(c);
-							instance.__currentState__.content.push(new fns.Content(textNode));
+							instance.__currentState__.content.push(new fns.Content(textNode,c));
+							console.log(c);
 							instance.__raw__.appendChild(textNode);
 						}catch(err){
 							console.warn(err);
@@ -337,8 +340,8 @@ var Smi=(function(){
 			}else{
 				try{
 					var	textNode=document.createTextNode(_arr);
-					instance.__currentState__.content.push(new fns.Content(textNode));
-					instance.__raw__.appendChild(document.createTextNode(_arr));
+					instance.__currentState__.content.push(new fns.Content(textNode,_arr));
+					instance.__raw__.appendChild(textNode);
 				}catch(err){
 					console.warn(err);
 				}
@@ -348,11 +351,11 @@ var Smi=(function(){
 		var rt=build(topCompInfo);
 		for(var i in rt.__eventHandle__){
 			rt.__raw__.addEventListener(i,rt.__eventHandle__[i]);
-		};
+		}
 		ele.appendChild(rt.__raw__);
-	}
-	return{
+	};
+	return {
 		deF:deF,
 		render:render
-	}
+	};
 })();
