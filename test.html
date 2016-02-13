@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		@keyframes mymove{
+			0% {transform:rotateZ(45deg) rotate3d(1,1,0,0deg);}
+			100% {transform:rotateZ(45deg) rotate3d(1,1,0,360deg);}
+		}
+		#display{
+			transform-style:preserve-3d;
+			height: 100px;
+			width: 100px;
+			transform-origin:50% 50% -50px;
+			animation:mymove 2s 0s infinite normal;
+		}
+		#display div{
+			opacity: 0.6;
+			width: 100px;
+			height: 100px;
+			line-height: 100px;
+			text-align: center;
+			position: absolute;
+	/*		backface-visibility:visible;*/
+			box-sizing:border-box;
+		}
+		#display div:nth-child(1){
+			border:2px red solid;
+			transform:translateZ(-100px);
+		}
+		#display div:nth-child(2){
+			border:2px orange solid;
+			transform:translate3d(-50px,0,-50px) rotateY(90deg);
+		}
+		#display div:nth-child(3){
+			border:2px yellow solid;
+			transform:translate3d(50px,0,-50px) rotateY(-90deg);
+		}
+		#display div:nth-child(4){
+			transform:translate3d(0,-50px,-50px) rotateX(90deg);
+			border:2px green solid;
+		}
+		#display div:nth-child(5){
+			transform:translate3d(0,50px,-50px) rotateX(-90deg);
+			border:2px blue solid;
+		}
+		#display div:nth-child(6){
+			border:2px purple solid;
+		}
+	</style>
+</head>
+<body>
+	<div id="display">
+		<div>1</div>
+		<div>2</div>
+		<div>3</div>
+		<div>4</div>
+		<div>5</div>
+		<div>6</div>
+	</div>
+</body>
+</html>
