@@ -11,6 +11,22 @@
 <div id="dis"></div>
 <script type="text/javascript" src="src/smi_js/smi.js"></script>
 <script type="text/javascript">
+var M=Smi.deF({
+	prop:{
+		_raw_:"span"
+	},
+	content:function(){
+		return this.prop.i;
+	}
+});
+var S=Smi.deF({
+	prop:{
+		_raw_:"span"
+	},
+	content:function(){
+		return [1,M({i:2})];
+	}
+});
 var A=Smi.deF({
 	prop:{
 		_style_:{
@@ -25,26 +41,23 @@ var B=Smi.deF({
 	prop:{
 		val:0
 	},
+	fns:{
+		didmount:function(){
+			setTimeout(()=>{
+				this.prop.val=10;
+				this.update();
+			},1000);
+		}
+	},
 	content:function(){
 		return [A({i:this.prop.val,_style_:{background:"black"}},{click:function(eve){
 			eve.preventDefault();
 			this.prop.val++;
 			this.update();
-		}})];
+		}}),"asd",A()];
 	}
 });
 Smi.render(B(),document.getElementById("dis"));
-
-fns:{
-	handleClick:function(eve){
-		this.off("move");//移除所有子元素注册的事件
-		this.offCurrent("move");//移除触发改方法的子元素的事件
-		this.onCurrent("",function(){//注册触发改方法的元素的事件
-		});
-		this.on("",function(){//所有子元素都注册的事件
-		});
-	}
-}
 </script>
 </body>
 </html>

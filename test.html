@@ -9,11 +9,16 @@
 			100% {transform:rotateZ(45deg) rotate3d(1,1,0,360deg);}
 		}
 		#display{
-			transform-style:preserve-3d;
+/*			transform-style:preserve-3d;
 			height: 100px;
 			width: 100px;
 			transform-origin:50% 50% -50px;
-			animation:mymove 2s 0s infinite normal;
+			animation:mymove 2s 0s infinite normal;*/
+			top: 800px;
+			left: 300px;
+			position: relative;
+			width: 100px;
+			height: 100px;
 		}
 		#display div{
 			opacity: 0.6;
@@ -51,7 +56,8 @@
 	</style>
 </head>
 <body>
-	<div id="display">
+<div>
+		<div id="display">
 		<div>1</div>
 		<div>2</div>
 		<div>3</div>
@@ -59,5 +65,16 @@
 		<div>5</div>
 		<div>6</div>
 	</div>
+</div>
+
+<script type="text/javascript">
+	// var dis=document.getElementById("display");
+	// document.body.oncontextmenu=function(event){
+	// 	event.preventDefault();
+	// };	
+	var arr=[];
+	arr.c=0;
+	console.log((0+"").split("."));
+</script>
 </body>
 </html>
