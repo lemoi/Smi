@@ -32,8 +32,9 @@
 		}
 		#display div:nth-child(1){
 			border:2px red solid;
-			transform:translateZ(-100px);
-		}
+			padding: 50px;
+			/*transform:translateZ(-100px);*/
+		}/*
 		#display div:nth-child(2){
 			border:2px orange solid;
 			transform:translate3d(-50px,0,-50px) rotateY(90deg);
@@ -52,7 +53,7 @@
 		}
 		#display div:nth-child(6){
 			border:2px purple solid;
-		}
+		}*/
 	</style>
 </head>
 <body>
@@ -66,15 +67,15 @@
 		<div>6</div>
 	</div>
 </div>
-
+<form>
+	<img id="img1">
+</form>
 <script type="text/javascript">
-	// var dis=document.getElementById("display");
-	// document.body.oncontextmenu=function(event){
-	// 	event.preventDefault();
-	// };	
-	var arr=[];
-	arr.c=0;
-	console.log((0+"").split("."));
+	var dis=document.getElementById("display");
+	document.body.onclick=function(event){
+		console.log(event.offsetX);
+	};
+	document.getElementById("img1").src="https://ss0.bdstatic.com/5aV1bjqh_Q23odCf/static/superman/img/logo/logo_white_fe6da1ec.png"	
 </script>
 </body>
 </html>
