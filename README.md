@@ -1,5 +1,5 @@
 # Smi
-###### this is a smaller and smarter framework similar to React for build front-end page 
+###### this is a smaller and smarter framework similar to React for building front-end page 
 The core apis are :
 #####1.Smi.deF
 
