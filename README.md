@@ -33,7 +33,7 @@ prop:{
 	...
 }
 ```
-the attribues of Dom element is like `_attr_`
+the attribue of Dom element is like `_attr_`
 
 the fns has a special value:
 
