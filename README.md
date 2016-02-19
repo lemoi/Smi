@@ -83,7 +83,7 @@ if you want to make your change appear to dom,you must invoke this.update();
 #####2.Smi.render
 
 ```javascript
-Smi.render(facFunc({dataToAdd},{eventHandle}),wrapDoemElement)
+Smi.render(facFunc({dataToAdd},{eventHandle}),wrapDomElement)
 ```
 Some examples:
 ```javascript
