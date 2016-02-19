@@ -1,8 +1,30 @@
 "use strict";
 
 var Smi = function () {
+	var instanceList = { renderNum: 0, data: {} };
+	instanceList.getIns = function (id) {
+		if (id instanceof Array) {
+			return id.map(function (val) {
+				return instanceList.data[val];
+			});
+		} else {
+			return instanceList.data[id];
+		}
+	};
+	instanceList.getHigherIDs = function (id) {
+		var ID = id;
+		var rtValue = [];
+		rtValue.push(ID);
+		while (!!(ID = ID.slice(0, -2))) {
+			rtValue.push(ID);
+		}
+		return rtValue;
+	};
+	instanceList.setIns = function (id, content) {
+		instanceList.data[id] = content;
+	};
 	var Attr = {};
-	Attr.__attr__ = ["class", "data", "style", "id"];
+	Attr.__attr__ = ["class", "data", "style", "id", "src", "name", "value", "href"];
 	Attr.each = function (callback) {
 		this.__attr__.forEach(function (value) {
 			callback(value);
@@ -12,7 +34,7 @@ var Smi = function () {
 	fns.deepCopy = function (copyTo, obj) {
 		Object.keys(obj).forEach(function (i) {
 			if (Object.getPrototypeOf(obj[i]) === Object.prototype) {
-				if (copyTo[i] && Object.getPrototypeOf(copyTo[i]) === Object.prototype) {} else {
+				if (i === "_style_" && copyTo[i] && Object.getPrototypeOf(copyTo[i]) === Object.prototype) {} else {
 					copyTo[i] = {};
 				}
 				this.deepCopy(copyTo[i], obj[i]);
@@ -28,9 +50,9 @@ var Smi = function () {
 		}.bind(this));
 		return copyTo;
 	};
-	fns.Content = function (val, initInfo) {
+	fns.Content = function (initInfo, val) {
 		this.value = val;
-		this.initInfo = initInfo || "computed";
+		this.initInfo = initInfo !== undefined ? initInfo : "computed";
 	};
 	fns.diff = function (obj1, obj2) {
 		//以obj1为参考
@@ -146,7 +168,7 @@ var Smi = function () {
 				this.__opNum__ = [];
 			}
 			var _arr1 = this.content();
-			var _arr2 = this.__currentState__.content;
+			var _arr2 = instanceList.getIns(this.__currentState__.content);
 			if (_arr1 instanceof Array) {
 				_arr1.forEach(function (c, i) {
 					if (c instanceof Initinfo && c.__compT == _arr2[i].initInfo.__compT) {
@@ -155,7 +177,10 @@ var Smi = function () {
 						}
 						A.call(_arr2[i].value);
 					} else {
-						_arr2[i].value.nodeValue = c;
+						if (_arr2[i].initInfo != c) {
+							_arr2[i].initInfo = c;
+							_arr2[i].value.nodeValue = c;
+						}
 					}
 				});
 			} else {
@@ -165,10 +190,143 @@ var Smi = function () {
 					}
 					A.call(_arr2[0].value);
 				} else {
-					_arr2[0].value.nodeValue = _arr1;
+					if (_arr2[0].initInfo != _arr1) {
+						_arr2[0].initInfo = _arr1;
+						_arr2[0].value.nodeValue = _arr1;
+					}
 				}
 			}
 		}).call(instance);
+	};
+	//事件代理对象
+	var EventProxy = function EventProxy(evt) {
+		this.nativeEvent = evt;
+		this.bubbles = true;
+		this.cancelable = evt.cancelable;
+		this.defaultPrevented = false;
+		this.preventDefault = evt.preventDefault.bind(evt);
+		this.type = evt.type;
+		this.isTrusted = evt.isTrusted;
+		this.target = evt.target;
+		this.timeStamp = evt.timeStamp;
+		this.init();
+	};
+	EventProxy.Type = {
+		Clipboard: ["clipboardData"],
+		Composition: ["data"],
+		Keyboard: ["altKey", "charCode", "ctrlKey", "key", "keyCode", "locale", "location", "metaKey", "repeat", "shiftKey", "which"],
+		Focus: ["relatedTarget"],
+		UI: ["detail", "view"],
+		Wheel: ["deltaMode", "deltaX", "deltaY", "deltaZ"],
+		Touch: ["altKey", "changedTouches", "ctrlKey", "metaKey", "shiftKey", "targetTouches", "touches"],
+		Mouse: ["altKey", "button", "buttons", "clientX", "clientY", "ctrlKey", "metaKey", "pageX", "pageY", "relatedTarget", "screenX", "screenY", "shiftKey", "offsetX", "offsetY", "getModifierState"],
+		Form: []
+	};
+	EventProxy.Event = {
+		copy: "Clipboard",
+		cut: "Clipboard",
+		paste: "Clipboard",
+		compositionend: "Composition",
+		compositionstart: "Composition",
+		compositionupdate: "Composition",
+		keydown: "Keyboard",
+		keypress: "Keyboard",
+		keyup: "Keyboard",
+		focus: "Focus",
+		blur: "Focus",
+		scroll: "UI",
+		wheel: "Wheel",
+		mousedown: "Mouse",
+		mouseup: "Mouse",
+		mousemove: "Mouse",
+		click: "Mouse",
+		dblclick: "Mouse",
+		mouseover: "Mouse",
+		mouseout: "Mouse",
+		mouseenter: "Mouse",
+		mouseleave: "Mouse",
+		contextmenu: "Mouse",
+		touchstart: "Touch",
+		touchend: "Touch",
+		touchmove: "Touch",
+		touchcancel: "Touch",
+		change: "Form",
+		submit: "Form",
+		input: "Form",
+		select: "Form"
+	};
+	EventProxy.prototype.init = function () {
+		var _this2 = this;
+
+		EventProxy.Type[EventProxy.Event[this.type]].forEach(function (val) {
+			_this2[val] = _this2.nativeEvent[val];
+		});
+	};
+	EventProxy.prototype.stopPropagation = function () {
+		this.bubbles = false;
+	};
+	EventProxy.prototype.preventDefault = function () {
+		this.defaultPrevented = true;
+		this.nativeEvent.preventDefault();
+	};
+	var EventModel = function EventModel() {
+		this.rawEvents = {};
+		this.compEvents = {};
+	};
+	EventModel.CompEvent = ["didmount"];
+	EventModel.prototype.hasAdd = function (evtType) {
+		return this.rawEvents.hasOwnProperty(evtType);
+	};
+	EventModel.prototype.evtFunc = function (evtType) {
+		var self = this;
+		return function (evt) {
+			var targetId = evt.target.dataset.smiid;
+			var eventsLine = instanceList.getHigherIDs(targetId);
+			var event = new EventProxy(evt),
+			    val;
+			for (var i = 0; i < eventsLine.length; i++) {
+				val = eventsLine[i];
+				if (self.rawEvents[evtType].hasOwnProperty(val)) {
+					event.currentTarget = instanceList.getIns(val).value;
+					self.rawEvents[evtType][val](event);
+					if (!event.bubbles) break;
+				}
+			}
+		};
+	};
+	EventModel.prototype.push = function (ins_id, ins_bind_id) {
+		var _this3 = this;
+
+		var ins = instanceList.getIns(ins_id).value;
+		var ins_bind = ins_bind_id === undefined ? false : instanceList.getIns(ins_bind_id).value;
+		for (var i in ins.__eventHandle__) {
+			if (!this.hasAdd(i)) this.rawEvents[i] = {};
+			if (ins_bind === false) {
+				this.rawEvents[i][ins_id] = ins.__eventHandle__[i];
+			} else {
+				this.rawEvents[i][ins_id] = ins.__eventHandle__[i].bind(ins_bind);
+			}
+		}
+		EventModel.CompEvent.forEach(function (val) {
+			if (ins.fns.hasOwnProperty(val)) {
+				if (!_this3.compEvents.hasOwnProperty(val)) _this3.compEvents[val] = {};
+				_this3.compEvents[val][ins_id] = ins.fns[val].bind(ins);
+			}
+		});
+	};
+	EventModel.prototype.remove = function (ins_id, eveType) {
+		if (this.rawEvents[eveType][ins_id]) delete this.rawEvents[eveType][ins_id];
+	};
+	EventModel.prototype.start = function (topComp_id) {
+		this.push(topComp_id);
+		this.root = instanceList.getIns(topComp_id).value.__raw__;
+		var i;
+		for (i in this.rawEvents) {
+			this.root.addEventListener(i, this.evtFunc(i), false);
+		}
+		for (i in this.compEvents.didmount) {
+			this.compEvents.didmount[i]();
+		}
 	};
 	var Component = function Component(compT, dataObj, eveLisObj) {
 		compT.prop = compT.prop || {};
@@ -183,7 +341,6 @@ var Smi = function () {
 		this.__eventHandle__ = eveLisObj;
 		this.__currentState__ = {};
 		this.__opNum__ = []; //冻结对象
-		this.__eventListeners__ = {}; //{"click":function(){},
 	};
 	Component.prototype.__op__ = function (attr, which) {
 		var instance = this;
@@ -262,22 +419,48 @@ var Smi = function () {
 	Component.prototype.setPropData = function (dataObj) {
 		this.prop = fns.deepCopy(fns.deepCopy({}, this.__prop__), dataObj);
 	};
+	Component.prototype.off = function () {};
 	var Initinfo = function Initinfo(obj, dataObj, eveLisObj) {
 		this.__compT = obj;
 		this.__dataAdd = dataObj;
 		this.__eventHandle = eveLisObj;
 	};
 	var deF = function deF(obj) {
-		return function () {
-			var dataObj = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-			var eveLisObj = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+		return function (dataObj, eveLisObj) {
+			dataObj = dataObj || {};
+			eveLisObj = eveLisObj || {};
 			return new Initinfo(obj, dataObj, eveLisObj);
 		};
 	};
 	var render = function render(topCompInfo, ele) {
-		var build = function build(init) {
+		var build = function build(init, id) {
+			var buildContent = function buildContent(c) {
+				var ID = id + "." + _id++;
+				if (c === undefined) {
+					console.warn("lack of any required parameter");
+					c = "undefined";
+				}
+				if (c instanceof Initinfo) {
+					var rc = build(c, ID);
+					instance.__currentState__.content.push(ID);
+					eventModel.push(ID, id);
+					instance.__raw__.appendChild(rc.__raw__);
+				} else {
+					try {
+						var textNode = document.createTextNode(c);
+						instanceList.setIns(ID, new fns.Content(c, textNode));
+						instance.__currentState__.content.push(ID);
+						instance.__raw__.appendChild(textNode);
+					} catch (err) {
+						console.warn(err);
+					}
+				}
+			};
+			var _id = 0;
 			var instance = new Component(init.__compT, init.__dataAdd, init.__eventHandle);
+			instanceList.setIns(id, new fns.Content(init, instance));
+			instance.__id__ = id;
+			instance.__op__("data", "+")({ smiid: id });
 			Attr.each(function (value) {
 				var i;
 				if ((i = instance.prop["_" + value + "_"]) !== undefined) {
@@ -292,7 +475,6 @@ var Smi = function () {
 							break;
 						default:
 							instance.__currentState__[value] = i;
-
 					}
 					instance.__op__(value, "+")(i);
 				}
@@ -305,44 +487,17 @@ var Smi = function () {
 			}
 			if (_arr instanceof Array) {
 				_arr.forEach(function (c) {
-					if (c === undefined) {
-						console.warn("lack of any required parameter");
-						c = "undefined";
-					}
-					if (c instanceof Initinfo) {
-						var rc = build(c);
-						instance.__currentState__.content.push(new fns.Content(rc, c));
-						/*初步实现待整改，消息代理等等*/
-
-						for (var i in rc.__eventHandle__) {
-							rc.__raw__.addEventListener(i, rc.__eventHandle__[i].bind(instance));
-						}
-						instance.__raw__.appendChild(rc.__raw__);
-					} else {
-						try {
-							var textNode = document.createTextNode(c);
-							instance.__currentState__.content.push(new fns.Content(textNode));
-							instance.__raw__.appendChild(textNode);
-						} catch (err) {
-							console.warn(err);
-						}
-					}
+					buildContent(c);
 				});
 			} else {
-				try {
-					var textNode = document.createTextNode(_arr);
-					instance.__currentState__.content.push(new fns.Content(textNode));
-					instance.__raw__.appendChild(document.createTextNode(_arr));
-				} catch (err) {
-					console.warn(err);
-				}
+				buildContent(_arr);
 			}
 			return instance;
 		};
-		var rt = build(topCompInfo);
-		for (var i in rt.__eventHandle__) {
-			rt.__raw__.addEventListener(i, rt.__eventHandle__[i]);
-		}
+		var eventModel = new EventModel();
+		var id = instanceList.renderNum++;
+		var rt = build(topCompInfo, id + "");
+		eventModel.start(id);
 		ele.appendChild(rt.__raw__);
 	};
 	return {

@@ -25,26 +25,20 @@ var B=Smi.deF({
 	prop:{
 		val:0
 	},
+	fns:{
+		didmount:function(){
+			setTimeout(()=>{
+				this.prop.val=10;
+				this.update();
+			},1000);
+		}
+	},
 	content:function(){
-		return [A({i:this.prop.val,_style_:{background:"black"}},{click:function(eve){
-			eve.preventDefault();
-			this.prop.val++;
-			this.update();
-		}})];
+		return A({i:this.prop.val},{contextmenu:function(evt){this.prop.val++;this.update();evt.preventDefault();}});
 	}
 });
-Smi.render(B(),document.getElementById("dis"));
+Smi.render(B({},{contextmenu:function(evt){evt.preventDefault();}}),document.getElementById("dis"));
 
-fns:{
-	handleClick:function(eve){
-		this.off("move");//移除所有子元素注册的事件
-		this.offCurrent("move");//移除触发改方法的子元素的事件
-		this.onCurrent("",function(){//注册触发改方法的元素的事件
-		});
-		this.on("",function(){//所有子元素都注册的事件
-		});
-	}
-}
 </script>
 </body>
 </html>
