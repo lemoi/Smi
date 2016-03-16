@@ -28,9 +28,15 @@ var Smi=(function(){
 			callback(value);
 		});
 	};
+	Attr.testRegExp=new RegExp("_([a-z]+)_$");
 	var fns={};
 	fns.deepCopy=function(copyTo,obj){
 		Object.keys(obj).forEach(function(i){
+			if(obj[i]===undefined) return;
+			else if(obj[i]===null){
+				copyTo[i]=null;
+				return;
+			}
 			if(Object.getPrototypeOf(obj[i])===Object.prototype){
 				if(i==="_style_"&&copyTo[i]&&Object.getPrototypeOf(copyTo[i])===Object.prototype){
 				}else{
@@ -124,6 +130,26 @@ var Smi=(function(){
 			return false;
 		}
 	};
+	fns.deepDiff=function(Obj1,Obj2){
+		for(var i in Obj1){
+			if(Obj2[i]===undefined) return false;
+			if(typeof Obj1[i]==="object"&&typeof Obj2[i]==="object"){
+				if(Object.getPrototypeOf(Obj1[i])===Object.getPrototypeOf(Obj2[i])){
+					if(fns.deepDiff(Obj1[i], Obj2[i])===false){
+						return false;
+					}
+				}else{
+					return false;
+				}
+			}else{
+				if(Obj1[i]!==Obj2[i]) return false;
+			}
+		}
+		for(i in Obj2){
+			if(Obj1[i]===undefined) return false;
+		}
+		return true;		
+	};
 	fns.update=function(instance){
 		(function A(){
 			Attr.each(function(value){
@@ -159,14 +185,15 @@ var Smi=(function(){
 				}.bind(this));
 				this.__opNum__=[];			
 			}
+			if(this.__isSpecial__) return;
 			var _arr1=this.content();
 			var _arr2=instanceList.getIns(this.__currentState__.content);
 			if(_arr1 instanceof Array){
 				_arr1.forEach(function(c,i){
 					if (c instanceof Initinfo&&c.__compT==_arr2[i].initInfo.__compT){
-						if(c.__dataAdd!==undefined){
-							_arr2[i].value.setPropData(c.__dataAdd);
-						}
+						if(fns.deepDiff(c.__dataAdd,_arr2[i].initInfo.__dataAdd)===true) return;
+						_arr2[i].value.setPropData(c.__dataAdd);
+						_arr2[i].initInfo.__dataAdd=c.__dataAdd;
 						A.call(_arr2[i].value);
 					}else{
 						if(_arr2[i].initInfo!=c){
@@ -177,10 +204,10 @@ var Smi=(function(){
 				});
 			}else{
 				if(_arr1 instanceof Initinfo){
-					if(_arr1.__dataAdd!==undefined){
+					if(fns.deepDiff(_arr1.__dataAdd,_arr2[0].initInfo.__dataAdd)===true) return;
 						_arr2[0].value.setPropData(_arr1.__dataAdd);
-					}
-					 A.call(_arr2[0].value);
+						_arr2[0].initInfo.__dataAdd=_arr1.__dataAdd;
+						A.call(_arr2[0].value);
 				}else{
 					if(_arr2[0].initInfo!=_arr1){
 						_arr2[0].initInfo=_arr1;
@@ -194,6 +221,7 @@ var Smi=(function(){
 	var EventProxy=function(evt){
 		this.nativeEvent=evt;
 		this.bubbles=true;
+		this.immdeiateBubbles=true;
 		this.cancelable=evt.cancelable;
 		this.defaultPrevented=false;
 		this.preventDefault=evt.preventDefault.bind(evt);
@@ -201,6 +229,7 @@ var Smi=(function(){
 		this.isTrusted=evt.isTrusted;
 		this.target=evt.target;
 		this.timeStamp=evt.timeStamp;
+		this.currentTarget=null;
 		this.init();
 	};
 	EventProxy.Type={
@@ -254,15 +283,22 @@ var Smi=(function(){
 	};
 	EventProxy.prototype.stopPropagation=function(){
 		this.bubbles=false;
+		this.nativeEvent.stopPropagation();
 	};
 	EventProxy.prototype.preventDefault=function(){
 		this.defaultPrevented=true;
 		this.nativeEvent.preventDefault();
 	};
+	EventProxy.prototype.stopImmediatePropagation=function(){
+		this.immdeiateBubbles=false;
+		this.bubbles=false;
+		this.nativeEvent.stopImmediatePropagation();
+	};
 	var EventModel=function(){
 		this.rawEvents={};
 		this.compEvents={};
 	};
+	EventModel.instanceList=[];
 	EventModel.CompEvent=["didmount"];
 	EventModel.prototype.hasAdd=function(evtType){
 		return this.rawEvents.hasOwnProperty(evtType);
@@ -270,29 +306,35 @@ var Smi=(function(){
 	EventModel.prototype.evtFunc=function(evtType){
 		var self=this;
 		return function(evt){
+			var length=Object.keys(self.rawEvents[evtType]).length-1;
+			if (length===0) return;
 			var targetId=evt.target.dataset.smiid;
 			var eventsLine=instanceList.getHigherIDs(targetId);
-			var event=new EventProxy(evt),val;
+			var event=new EventProxy(evt),val,j=0;
 			for(var i=0;i<eventsLine.length;i++){
 				val=eventsLine[i];
 				if(self.rawEvents[evtType].hasOwnProperty(val)){
 					event.currentTarget=instanceList.getIns(val).value;
-					self.rawEvents[evtType][val](event);
-					if(!event.bubbles) break;
+					if(self.rawEvents[evtType][val] instanceof Array){
+						for(var h in self.rawEvents[evtType][val]){
+							self.rawEvents[evtType][val][h](event);
+							if(!event.immdeiateBubbles) return;
+						}
+					}else{
+						self.rawEvents[evtType][val](event);
+					}
+					if(!event.bubbles) return;
+					j++;
+					if(j===length) return;
 				}
 			}
 		};	
 	};
-	EventModel.prototype.push=function(ins_id,ins_bind_id){
+	EventModel.prototype.push=function(ins_id){
 		var ins=instanceList.getIns(ins_id).value;
-		var ins_bind=ins_bind_id===undefined?false:instanceList.getIns(ins_bind_id).value;
 		for(var i in ins.__eventHandle__){
 			if(!this.hasAdd(i)) this.rawEvents[i]={};
-			if(ins_bind===false){
-				this.rawEvents[i][ins_id]=ins.__eventHandle__[i];
-			}else{
-				this.rawEvents[i][ins_id]=ins.__eventHandle__[i].bind(ins_bind);
-			}
+			this.rawEvents[i][ins_id]=ins.__eventHandle__[i];
 		}
 		EventModel.CompEvent.forEach((val)=>{
 			if(ins.fns.hasOwnProperty(val)){
@@ -300,6 +342,42 @@ var Smi=(function(){
 				this.compEvents[val][ins_id]=ins.fns[val].bind(ins);
 			}			
 		});
+	};
+	EventModel.prototype.on=function(type,call,insId){
+		if(!this.hasAdd(type)) { 
+			this.rawEvents[type]={};
+			this.rawEvents[type][insId]=call;
+			this.rawEvents[type].handleFunc=this.evtFunc(type);
+			this.root.addEventListener(type,this.rawEvents[type].handleFunc,false);
+			return;		
+		}
+		if(this.rawEvents[type][insId]!==undefined){
+			var arr=[];
+			arr.push(this.rawEvents[type][insId]);
+			arr.push(call);
+			this.rawEvents[type][insId]=arr;
+		}else{
+			this.rawEvents[type][insId]=call;		
+		}
+	};
+	EventModel.prototype.off=function(type,insId){
+		try{
+			delete this.rawEvents[type][insId];
+			if(Object.keys(this.rawEvents[type]).length===1){
+				this.root.removeEventListener(type,this.rawEvents[type].handleFunc);
+				delete this.rawEvents[type];
+			} 
+		}catch(err){
+			console.warn("smiid-"+insId+" : the "+type+" event has not been attached");
+		}
+	};
+	EventModel.prototype.hasOn=function(type,insId){
+		try{
+			if(this.rawEvents[type].hasOwnProperty(insId)) return true;
+			else return false;
+		}catch(err){
+			return false;
+		}
 	};
 	EventModel.prototype.remove=function(ins_id,eveType){
 		if(this.rawEvents[eveType][ins_id])
@@ -310,8 +388,10 @@ var Smi=(function(){
 		this.root=instanceList.getIns(topComp_id).value.__raw__;
 		var i;
 		for(i in this.rawEvents){
-			this.root.addEventListener(i,this.evtFunc(i),false);
+			this.rawEvents[i].handleFunc=this.evtFunc(i);
+			this.root.addEventListener(i,this.rawEvents[i].handleFunc,false);
 		}
+		EventModel.instanceList.push(this);
 		for(i in this.compEvents.didmount){
 			this.compEvents.didmount[i]();
 		}
@@ -319,15 +399,23 @@ var Smi=(function(){
 	var	Component=function(compT,dataObj,eveLisObj){
 			compT.prop=compT.prop||{};
 			this.__prop__=compT.prop;
-			this.fns=compT.fns||{};
+			this.fnsCopy(compT.fns);
 			this.content=compT.content||(function(){return undefined;});
 			this.setPropData(dataObj);
-			this.prop._raw_=this.prop._raw_||"div";	
+			this.prop._raw_=this.prop._raw_||"div";
+			this.__isSpecial__=false;	
 			this.__raw__=document.createElement(this.prop._raw_);	
 			this.__eventHandle__=eveLisObj;
 			this.__currentState__={};
-			this.__opNum__=[];//冻结对象 
+			this.__opNum__=[];//冻结对象
 	};
+	Component.prototype.fnsCopy=function(fns){
+		this.fns={};
+		if(fns===undefined) return;
+		for(var i in fns){
+			this.fns[i]=fns[i].bind(this);
+		}
+	};	
 	Component.prototype.__op__=function (attr,which){
 			var instance=this;
 			function opDef(a,d){
@@ -417,8 +505,14 @@ var Smi=(function(){
 	Component.prototype.setPropData=function(dataObj){
 		this.prop=fns.deepCopy(fns.deepCopy({},this.__prop__),dataObj);
 	};
-	Component.prototype.off=function(){
-
+	Component.prototype.off=function(type){
+		EventModel.instanceList[this.__id__[0]].off(type,this.__id__);
+	};
+	Component.prototype.on=function(type,call){
+		EventModel.instanceList[this.__id__[0]].on(type,call,this.__id__);
+	};
+	Component.prototype.hasOn=function(type){
+		return EventModel.instanceList[this.__id__[0]].hasOn(type,this.__id__);
 	};
 	var Initinfo=function(obj,dataObj,eveLisObj){
 		this.__compT=obj;
@@ -436,14 +530,10 @@ var Smi=(function(){
 		var build=function(init,id){
 			var buildContent=function(c){
 				var ID=id+"."+(_id++);
-				if(c===undefined){
-					console.warn("lack of any required parameter");
-					c="undefined";
-				}
 				if(c instanceof Initinfo){
 					var rc=build(c,ID);
 					instance.__currentState__.content.push(ID);	
-					eventModel.push(ID,id);
+					eventModel.push(ID);
 					instance.__raw__.appendChild(rc.__raw__);					
 				}else{
 					try{
@@ -461,36 +551,48 @@ var Smi=(function(){
 			instanceList.setIns(id,new fns.Content(init,instance));
 			instance.__id__=id;
 			instance.__op__("data","+")({smiid:id});
-			Attr.each(function(value){
-				var i;
-				if((i=instance.prop["_"+value+"_"])!==undefined){
-					switch(value){
+			Object.keys(instance.prop).forEach(function(value){
+				var result=Attr.testRegExp.exec(value);
+				if(result!==null){
+					switch(result[1]){
 						case "style":	
 						case "data":
-							instance.__currentState__[value]={};
-							fns.deepCopy(instance.__currentState__[value],i);
+							instance.__currentState__[result[1]]={};
+							fns.deepCopy(instance.__currentState__[result[1]],instance.prop[value]);
 							break;
 						case "class":
-							instance.__currentState__[value]=i.slice();							
+							instance.__currentState__[result[1]]=instance.prop[value].slice();							
 							break;
 						default:
-							instance.__currentState__[value]=i;
+							instance.__currentState__[result[1]]=instance.prop[value];
 					}
-					instance.__op__(value,"+")(i);
+					instance.__op__(result[1],"+")(instance.prop[value]);
 				}
 			});
 			var _arr=instance.content();
-			instance.__currentState__.content=[];
-			if(_arr===undefined){
-				console.warn("lack of any required parameter");
-				_arr="undefined";
-			}
-			if(_arr instanceof Array){
-				_arr.forEach(function(c){
-					buildContent(c);
-				});
+			if(_arr===false){
+				instance.__isSpecial__=true;
 			}else{
-				buildContent(_arr);
+				instance.__currentState__.content=[];
+				if(_arr===undefined){
+					console.warn("lack of any required parameter");
+					_arr="undefined";
+				}else if(_arr===null){
+					_arr="null";
+				}
+				if(_arr instanceof Array){
+					_arr.forEach(function(c){
+						if(c===undefined){
+							console.warn("lack of any required parameter");
+							c="undefined";
+						}else if(_arr===null){
+							c="null";
+						}
+						buildContent(c);
+					});
+				}else{
+					buildContent(_arr);					
+				}	
 			}
 			return instance;
 		};
@@ -505,5 +607,3 @@ var Smi=(function(){
 		render:render
 	};
 })();
-
-

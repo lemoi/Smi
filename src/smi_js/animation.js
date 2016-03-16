@@ -1,6 +1,9 @@
 class Animation{
-	constructor(ele){
-		this._ele=ele;
-		this.AnimationLine=[];
+	constructor(){
+		this.animationLine=[];
+	}
+	rotate(deg){
+		this.animationLine.push("rotate("+deg+"deg)");
+		return this;
 	}
 }
