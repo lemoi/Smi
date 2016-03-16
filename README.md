@@ -1,5 +1,5 @@
 # Smi
-###### this is a smaller and smarter framework similar to React for build front-end page 
+###### this is a smaller and smarter framework similar to React for building front-end page 
 The core apis are :
 #####1.Smi.deF
 
@@ -33,7 +33,7 @@ prop:{
 	...
 }
 ```
-the attribues of Dom element is like `_attr_`
+the attribue of Dom element is like `_attr_`
 
 the fns has a special value:
 
@@ -83,7 +83,7 @@ if you want to make your change appear to dom,you must invoke this.update();
 #####2.Smi.render
 
 ```javascript
-Smi.render(facFunc({dataToAdd},{eventHandle}),wrapDoemElement)
+Smi.render(facFunc({dataToAdd},{eventHandle}),wrapDomElement)
 ```
 Some examples:
 ```javascript
