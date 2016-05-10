@@ -103,7 +103,7 @@ var B=Smi.deF({
 		}
 	},
 	content:function(){
-		return [A({i:"hello world"}),A{{},{click:handleClick}}];
+		return [A({i:"hello world"}),A{{},{click:this.fns.handleClick}}];
 	}
 });
 Smi.render(B(),document.getElementById("display"));
