@@ -76,7 +76,7 @@ var compb=Smi.deF({
 		}
 	},
 	content:function(){
-		return [compa({i:this.prop.val},{click:this.fns.handleClick},compa({i:this.prop.val}];
+		return [compa({i:this.prop.val},{click:this.fns.handleClick}),compa({i:this.prop.val})];
 	}
 })
 ```
