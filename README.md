@@ -1,4 +1,5 @@
 # Smi
+#####@v0.7.0
 ###### this is a smaller and smarter framework similar to React for building front-end page 
 The core apis are :
 #####1.Smi.deF
@@ -75,7 +76,7 @@ var compb=Smi.deF({
 		}
 	},
 	content:function(){
-		return [compa({i:this.prop.val},{click:this.fns.handleClick},compa({i:this.prop.val}];
+		return [compa({i:this.prop.val},{click:this.fns.handleClick}),compa({i:this.prop.val})];
 	}
 })
 ```
@@ -102,7 +103,7 @@ var B=Smi.deF({
 		}
 	},
 	content:function(){
-		return [A({i:1}),A{{},{click:handleClick}}];
+		return [A({i:"hello world"}),A{{},{click:this.fns.handleClick}}];
 	}
 });
 Smi.render(B(),document.getElementById("display"));
