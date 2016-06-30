@@ -133,6 +133,10 @@ var Smi=(function(){
 	fns.deepDiff=function(Obj1,Obj2){
 		for(var i in Obj1){
 			if(Obj2[i]===undefined) return false;
+			if(Obj1[i]===null){
+				if(Obj2[i]===null) continue;
+				else return false;				
+			}
 			if(typeof Obj1[i]==="object"&&typeof Obj2[i]==="object"){
 				if(Object.getPrototypeOf(Obj1[i])===Object.getPrototypeOf(Obj2[i])){
 					if(fns.deepDiff(Obj1[i], Obj2[i])===false){
@@ -299,7 +303,7 @@ var Smi=(function(){
 		this.compEvents={};
 	};
 	EventModel.instanceList=[];
-	EventModel.CompEvent=["didmount"];
+	EventModel.CompEvent=["init"];
 	EventModel.prototype.hasAdd=function(evtType){
 		return this.rawEvents.hasOwnProperty(evtType);
 	};
@@ -392,8 +396,8 @@ var Smi=(function(){
 			this.root.addEventListener(i,this.rawEvents[i].handleFunc,false);
 		}
 		EventModel.instanceList.push(this);
-		for(i in this.compEvents.didmount){
-			this.compEvents.didmount[i]();
+		for(i in this.compEvents.init){
+			this.compEvents.init[i]();
 		}
 	};
 	var	Component=function(compT,dataObj,eveLisObj){
@@ -514,6 +518,27 @@ var Smi=(function(){
 	Component.prototype.hasOn=function(type){
 		return EventModel.instanceList[this.__id__[0]].hasOn(type,this.__id__);
 	};
+	Component.prototype.share=function(key,value){
+		if(Component.ShareParaList.hasOwnProperty(key)){
+			if(Component.ShareParaList[key].sharer_id!==this.__id__)
+				console.warn("some shared parameter has been covered");
+		}
+		Component.ShareParaList[key]={sharer_id:this.__id__,value:value===undefined?null:value};
+	};
+	Component.prototype.getShared=function(key){
+		if(!Component.ShareParaList.hasOwnProperty(key)){
+			console.warn("the shared value does't exit");
+			return null;
+		}else{
+			if(new RegExp("^"+Component.ShareParaList[key].sharer_id).test(this.__id__)){
+				return Component.ShareParaList[key].value;
+			}else{
+				console.warn("have no access to get the value");
+				return null;
+			}
+		}
+	};
+	Component.ShareParaList={};
 	var Initinfo=function(obj,dataObj,eveLisObj){
 		this.__compT=obj;
 		this.__dataAdd=dataObj;
